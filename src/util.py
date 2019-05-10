@@ -1,150 +1,130 @@
+# From https://github.com/mgorjis/ITCC
+
 import numpy as np
 
 
-def prob_clust_Indiv(p, xhat, cX, yhat, cY):
-    return np.sum( p[np.array(cX==xhat).ravel(),:][:,np.array(cY==yhat).ravel()] )
+def prob_clust_indiv(p, x_hat, c_x, y_hat, c_y):
+    return np.sum(
+        p[np.array(c_x == x_hat).ravel(), :][:, np.array(c_y == y_hat).ravel()])
 
 
-def prob_clust(p, Xhat, cX, Yhat, cY):
-    output = np.empty([len(Xhat), len(Yhat)],dtype=float)  
-    for xhat in Xhat:
-        for yhat in Yhat:
-            output[xhat, yhat] = prob_clust_Indiv(p, xhat,cX, yhat,cY)
+def prob_clust(p, x_hat, c_x, y_hat, c_y):
+    output = np.empty([len(x_hat), len(y_hat)], dtype=float)
+    for xhat in x_hat:
+        for yhat in y_hat:
+            output[xhat, yhat] = prob_clust_indiv(p, xhat, c_x, yhat, c_y)
     return output
 
 
-def prob_x_given_xhat(p, x, xhat, cX):
-    return  np.sum(p[x,:]) / np.sum(p[np.array(cX==xhat).ravel(),:])   #
-
-def prob_y_given_yhat(p ,y, yhat, cY):
-    return  np.sum(p[:,y]) / np.sum(p[:,np.array(cY==yhat).ravel()])   #  
-
-def prob_Y_given_x(p, x):
-    return p[x,:] / np.sum(p[x,:])
-
-def prob_X_given_y(p, y):
-    return p[:,y] / np.sum(p[:,y])
+def prob_x_given_xhat(p, x, xhat, c_x):
+    return np.sum(p[x, :]) / np.sum(p[np.array(c_x == xhat).ravel(), :])  #
 
 
+def prob_y_given_yhat(p, y, yhat, c_y):
+    return np.sum(p[:, y]) / np.sum(p[:, np.array(c_y == yhat).ravel()])  #
 
-def calc_q_Indiv(p, x,cX, y,cY):
-    return prob_clust_Indiv(p, cX[0,x],cX, cY[0,y], cY) * prob_x_given_xhat(p, x, cX[0,x],cX) * prob_y_given_yhat(p, y, cY[0,y],cY)
+
+def prob_y_given_x(p, x):
+    return p[x, :] / np.sum(p[x, :])
 
 
-def calc_q(p, X, cX, Y, cY):
-    output = np.empty([len(X), len(Y)],dtype=float)
-    for x in X:
-        for y in Y:
-            output[x,y] = calc_q_Indiv(p, x,cX, y,cY)
+def prob_x_given_y(p, y):
+    return p[:, y] / np.sum(p[:, y])
+
+
+def calc_q_indiv(p, x, c_x, y, c_y):
+    return prob_clust_indiv(p, c_x[0, x], c_x, c_y[0, y], c_y) * prob_x_given_xhat(
+        p, x, c_x[0, x], c_x) * prob_y_given_yhat(p, y, c_y[0, y], c_y)
+
+
+def calc_q(p, x, c_x, y, c_y):
+    output = np.empty([len(x), len(y)], dtype=float)
+    for xx in x:
+        for yy in y:
+            output[xx, yy] = calc_q_indiv(p, xx, c_x, yy, c_y)
     return output
 
 
-
-def prob_Y_given_xhat(p, xhat,cX):
-    return  np.sum(  p[np.array(cX==xhat).ravel(),:]  /  np.sum(p[np.array(cX==xhat).ravel(),:])  , axis=0 ) 
-         
-def prob_X_given_yhat(p, yhat,cY):
-    return   np.sum (p[:,np.array(cY==yhat).ravel()]  /  np.sum(p[:,np.array(cY==yhat).ravel()])  ,axis=1 ) 
+def prob_y_given_xhat(p, x_hat, c_x):
+    return np.sum(p[np.array(c_x == x_hat).ravel(), :] / np.sum(
+        p[np.array(c_x == x_hat).ravel(), :]), axis=0)
 
 
-                  
-#def kl_divergence(p,q):
-    #p = np.asmatrix(p, dtype=np.float)
-    #q = np.asmatrix(q, dtype=np.float)
-    #S=0
-    #m = np.shape(p)[0]
-    #n = np.shape(p)[1]
-    #for i in range(0,m):
-         #for j in range(0,n):
-             #kl=p[i,j]*np.log2(p[i,j]) / (q[i,j])
-             #S=S+ kl       
-    #return S
-    
-    #import scipy.stats.distributions
-    #sum(scipy.stats.entropy(p,q))
-    #return np.sum(np.where(p != 0, p * np.log2(p / q), 0))
+def prob_x_given_yhat(p, y_hat, c_y):
+    return np.sum(p[:, np.array(c_y == y_hat).ravel()] / np.sum(
+        p[:, np.array(c_y == y_hat).ravel()]), axis=1)
 
 
-
-def kl_divergence(p,q):
-    TOLERANCE = 0.00000000000000000001
-    #Big=1000000
+def kl_divergence(p, q):
+    tolerance = 0.00000000000000000001
+    # Big=1000000
     p = np.asmatrix(p, dtype=np.float)
     q = np.asmatrix(q, dtype=np.float)
-    S=0
+    s = 0
     m = np.shape(p)[0]
     n = np.shape(p)[1]
-    for i in range(0,m):
-         for j in range(0,n):
-             kl=(p[i,j]+TOLERANCE) / (q[i,j]+TOLERANCE)  #+TOLERANCE
-             #if (kl)>0 :  #*q[i,j]
-             S=S+ (p[i,j]*np.log2(kl))
-             #if q[i,j]<TOLERANCE:
-                #print(p[i,j])
-                #print(q[i,j])
-                #print("salam")          
-    return S
-
-    
-    
-    
-    
-    
+    for i in range(0, m):
+        for j in range(0, n):
+            kl = (p[i, j] + tolerance) / (q[i, j] + tolerance)  # +TOLERANCE
+            s = s + (p[i, j] * np.log2(kl))
+    return s
 
 
-def next_cx(p,q, x, cX, k):
+def next_cx(p, q, x, c_x, k):
     q_dist_xhat = np.empty(k)
-    p_dist_x = prob_Y_given_x(p,x)
+    p_dist_x = prob_y_given_x(p, x)
 
-    for xhat in range(0,k):
-        q_dist_xhat[xhat] = kl_divergence( p_dist_x.ravel(), prob_Y_given_xhat(q, xhat,cX).ravel()  )
-        #print(q_dist_xhat)
-    return np.argmin(q_dist_xhat)   #
+    for xhat in range(0, k):
+        q_dist_xhat[xhat] = kl_divergence(
+            p_dist_x.ravel(),
+            prob_y_given_xhat(q, xhat, c_x).ravel()
+        )
+        # print(q_dist_xhat)
+    return np.argmin(q_dist_xhat)  #
 
-def next_cX(p,q, cX, k):
-    output = np.empty(np.shape(cX)[1])
-    for x in range(0,np.shape(cX)[1]):
-        #print(x)
-        output[x] = next_cx(p,q, x,cX, k)
+
+def next_c_x(p, q, c_x, k):
+    output = np.empty(np.shape(c_x)[1])
+    for x in range(0, np.shape(c_x)[1]):
+        # print(x)
+        output[x] = next_cx(p, q, x, c_x, k)
     return output
 
-def next_cy(p,q, y,cY, l):
+
+def next_cy(p, q, y, c_y, l):
     q_dist_yhat = np.empty(l)
-    p_dist_y = prob_X_given_y(p,y)
-    for yhat in range(0,l):
-        q_dist_yhat[yhat] = kl_divergence( p_dist_y.ravel(), prob_X_given_yhat(q, yhat, cY).ravel()  )  
+    p_dist_y = prob_x_given_y(p, y)
+    for yhat in range(0, l):
+        q_dist_yhat[yhat] = kl_divergence(
+            p_dist_y.ravel(),
+            prob_x_given_yhat(q, yhat, c_y).ravel()
+        )
     return np.argmin(q_dist_yhat)
 
 
-def next_cY(p,q, cY, l):
-    output = np.empty(np.shape(cY)[1])
-    for y in range(0,np.shape(cY)[1]):
-        output[y] = next_cy(p,q, y, cY, l)
+def next_c_y(p, q, c_y, l):
+    output = np.empty(np.shape(c_y)[1])
+    for y in range(0, np.shape(c_y)[1]):
+        output[y] = next_cy(p, q, y, c_y, l)
     return output
-    
-    
-    
-def sorting(p,k,l,cX,cY):
-     m = np.shape(p)[0]
-     n = np.shape(p)[1]
-     M=np.empty((1,n))
-     M=np.delete(M, (0), axis=0)
 
-     for i in range(0,k):
-    #ind=cX[np.array(cX==i)]
-        indexes=[]
-        indexes =np.where(cX==i)
-        a=p[indexes[1],:]
-        M=np.vstack([M,a])
 
-     M1=np.empty((m,1))
-     M1=np.delete(M1, (0), axis=1) 
-        
-     for j in range(0,l):
-    #ind=cX[np.array(cX==i)]
-        indexes=[]
-        indexes =np.where(cY==j)
-        a=M[:,indexes[1]]
-        M1=np.hstack([M1,a]) 
-        
-     return M1 
+def sorting(p, k, l, c_x, c_y):
+    n = np.shape(p)[1]
+    m = np.empty((1, n))
+    m = np.delete(m, 0, axis=0)
+
+    for i in range(0, k):
+        indexes = np.where(c_x == i)
+        a = p[indexes[1], :]
+        m = np.vstack([m, a])
+
+    m1 = np.empty((m, 1))
+    m1 = np.delete(m1, 0, axis=1)
+
+    for j in range(0, l):
+        indexes = np.where(c_y == j)
+        a = m[:, indexes[1]]
+        m1 = np.hstack([m1, a])
+
+    return m1

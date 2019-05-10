@@ -3,6 +3,9 @@ import src.util as u
 
 
 def itcc(p, k, l, n_iters, converge_threshold, c_x, c_y, verbose=False):
+    """
+    From https://github.com/mgorjis/ITCC
+    """
     m = np.shape(p)[0]
     n = np.shape(p)[1]
 
@@ -13,11 +16,11 @@ def itcc(p, k, l, n_iters, converge_threshold, c_x, c_y, verbose=False):
     for i in range(0, n_iters):
         kl_prev = kl_curr
         # Update c_x, q
-        c_x = np.matrix(u.next_cX(p, q, c_x, k))
+        c_x = np.matrix(u.next_c_x(p, q, c_x, k))
         q = u.calc_q(p, range(0, m), c_x, range(0, n), c_y)
 
         # Update c_y, q
-        c_y = np.matrix(u.next_cY(p, q, c_y, l))
+        c_y = np.matrix(u.next_c_y(p, q, c_y, l))
         q = u.calc_q(p, range(0, m), c_x, range(0, n), c_y)
 
         kl_curr = u.kl_divergence(p.ravel(), q.ravel())
@@ -51,7 +54,7 @@ def itcc_restricted(p, k, n_iters, converge_threshold, c_x, verbose=False):
     for i in range(0, n_iters):
         kl_prev = kl_curr
     # Update c_x
-        c_x = np.matrix(u.next_cX(p, q, c_x, k))
+        c_x = np.matrix(u.next_c_x(p, q, c_x, k))
 
     # Update c_y, q
         c_y = np.copy(c_x)

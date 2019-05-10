@@ -119,7 +119,7 @@ def sorting(p, k, l, c_x, c_y):
         a = p[indexes[1], :]
         m = np.vstack([m, a])
 
-    m1 = np.empty((m, 1))
+    m1 = np.empty((np.shape(p)[0], 1))
     m1 = np.delete(m1, 0, axis=1)
 
     for j in range(0, l):

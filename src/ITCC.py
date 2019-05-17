@@ -75,6 +75,19 @@ def itcc_restricted(p, k, n_iters, converge_threshold, c_x, verbose=False):
     return m1, q, c_x, c_y, clustered, error
 
 
+def clustering_error(data, c_x):
+    p = data.values
+    m = np.shape(p)[0]
+    n = np.shape(p)[1]
+
+    if m != n:
+        raise Exception(f'Input must be square array, was shape {np.shape}.')
+    c_x = np.matrix(c_x)
+    c_y = np.copy(c_x)
+    q = u.calc_q(p, range(0, m), c_x, range(0, n), c_y)
+    return u.kl_divergence(p.ravel(), q.ravel())
+
+
 def information_cocluster(data, k, l, iterations=10):
 
     from_names = dict(enumerate(data.index.values))
@@ -168,7 +181,7 @@ def information_cocluster_restricted(data, k, iterations=10):
             min_error = kl_divergence
             ret_c_x = c_x
         else:
-            print(f'Iteration {i}, worse')
+            print(f'Iteration {i}, worse {kl_divergence} > {min_error}')
 
     return ret_c_x
 
